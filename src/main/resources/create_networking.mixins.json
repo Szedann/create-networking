@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.szedann.create_networking.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "AbstractComputerBlockEntityMixin",
+    "AbstractContraptionEntityMixin",
+    "MinecraftServerMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
