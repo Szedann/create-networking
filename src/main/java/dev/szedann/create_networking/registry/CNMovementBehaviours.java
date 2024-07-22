@@ -13,6 +13,8 @@ public class CNMovementBehaviours {
 	public static void register(){
 		add(ModRegistry.Blocks.MONITOR_NORMAL.id(), new MonitorMovementBehaviour());
 		add(ModRegistry.Blocks.MONITOR_ADVANCED.id(), new MonitorMovementBehaviour());
+		add(ModRegistry.Blocks.WIRELESS_MODEM_NORMAL.id(), new MonitorMovementBehaviour());
+		add(ModRegistry.Blocks.WIRELESS_MODEM_ADVANCED.id(), new MonitorMovementBehaviour());
 	}
 
 	private static void add(Block block, MovementBehaviour movementBehaviour){

@@ -59,8 +59,10 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 		Contraption contraption = contraptionEntity.getContraption();
 		StructureTemplate.StructureBlockInfo info = contraption.getBlocks().get(localPos);
 
+		CompoundTag nbt = info.nbt();
 
-		if(info.nbt() == null)
+
+		if(nbt == null)
 			return false;
 
 		ComputerFamily family = ComputerFamily.NORMAL;
@@ -69,8 +71,8 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 
 
 		int computerID;
-		if(info.nbt().contains("ComputerId"))
-			computerID = info.nbt().getInt("ComputerId");
+		if(nbt.contains("ComputerId"))
+			computerID = nbt.getInt("ComputerId");
 		else computerID = ComputerCraftAPI.createUniqueNumberedSaveDir(level.getServer(), IDAssigner.COMPUTER);
 
 		ServerComputer computer = ServerContext.get(Objects.requireNonNull(level.getServer())).registry().get(computerID);
@@ -80,21 +82,8 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 			computer.register();
 		}
 
-		computer.turnOn();
 
 		ServerComputer finalComputer = computer;
-		new ComputerContainerData(computer, new ItemStack(ModRegistry.Items.COMPUTER_NORMAL.get())).open(player, new MenuProvider() {
-			@Override
-			public Component getDisplayName() {
-				return Component.translatable("gui.computercraft.view_computer");
-			}
-
-			@Override
-			public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
-				return new ViewComputerMenu(id, inventory, finalComputer);
-			}
-		});
-
 
 		if(!ComputerTicker.computers.contains(computer))
 			ComputerTicker.registerComputer(computer);
@@ -105,15 +94,15 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 
 		BlockState state = info.state().setValue(ComputerBlock.STATE, computerState);
 
-		setContraptionBlockData(contraptionEntity, localPos, new StructureTemplate.StructureBlockInfo(localPos, state, info.nbt()));
+		setContraptionBlockData(contraptionEntity, localPos, new StructureTemplate.StructureBlockInfo(localPos, state, nbt));
 
 		ArrayList<Contraption> contraptions = new ArrayList<>();
 
 		// add appropriate APIs
 
 		if(contraption instanceof CarriageContraption carriageContraption){
-			CompoundTag nbt = carriageContraption.entity.serializeNBT();
-			Train train = Create.RAILWAYS.trains.get(nbt.getUUID("TrainId"));
+			CompoundTag contraptionNBT = carriageContraption.entity.serializeNBT();
+			Train train = Create.RAILWAYS.trains.get(contraptionNBT.getUUID("TrainId"));
 			finalComputer.addAPI(new TrainApi(train));
 
 			contraptions.addAll(train.carriages.stream().map(carriage -> carriage.anyAvailableEntity().getContraption())
@@ -138,8 +127,10 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 
 				if(peripheral == null) return;
 
-				if(!(peripheral instanceof ModemPeripheral))
+				if(!(peripheral instanceof ModemPeripheral modem))
 					return;
+
+				ComputerCraftAPI.getWirelessNetwork(level.getServer()).addReceiver(modem);
 
 
 				if(blockEntity instanceof MonitorBlockEntity monitor &&
@@ -153,7 +144,7 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 			});
 		}
 
-		TrainModem modem = new TrainModem(peripherals);
+		TrainModem modem = new TrainModem(peripherals, level);
 
 		finalComputer.setPeripheral(ComputerSide.BACK, modem);
 
@@ -164,6 +155,20 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 //
 //		})
 
+		new ComputerContainerData(computer, new ItemStack(ModRegistry.Items.COMPUTER_NORMAL.get())).open(player, new MenuProvider() {
+			@Override
+			public Component getDisplayName() {
+				return Component.translatable("gui.computercraft.view_computer");
+			}
+
+			@Override
+			public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
+				return new ViewComputerMenu(id, inventory, finalComputer);
+			}
+		});
+
+		computer.turnOn();
+
 		return true;
 	}
 
@@ -172,7 +177,7 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 			String[] keys = peripheralName.split(Pattern.quote("_"));
 			String lastKey = keys[keys.length - 1];
 			return Integer.parseInt(lastKey);
-		}).max().orElse(0);
+		}).max().orElse(-1);
 		return peripheral.getType() + "_" + (maxIndex + 1);
 	}
 }
