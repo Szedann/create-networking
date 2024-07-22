@@ -69,7 +69,7 @@ public class TrainApi implements ILuaAPI {
 	}
 
 	@LuaFunction
-	public String getName(){
+	public final String getName(){
 		return train.name.getString();
 	}
 
