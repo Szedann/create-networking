@@ -11,7 +11,7 @@
     "sources": "https://github.com/Fabricators-of-Create/create-fabric-addon-template"
   },
   "license": "CC0",
-  "icon": "assets/create_netowrking/icon.png",
+  "icon": "assets/create_networking/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [

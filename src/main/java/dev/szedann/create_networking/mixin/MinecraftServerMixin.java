@@ -1,7 +1,6 @@
 package dev.szedann.create_networking.mixin;
 
 import dev.szedann.create_networking.ComputerTicker;
-import dev.szedann.create_networking.CreateNetworking;
 import net.minecraft.server.MinecraftServer;
 
 import org.spongepowered.asm.mixin.Mixin;

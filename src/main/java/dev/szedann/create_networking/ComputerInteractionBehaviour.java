@@ -41,6 +41,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,14 +68,14 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 			return false;
 
 		ComputerFamily family = ComputerFamily.NORMAL;
-		if(BlockEntity.loadStatic(localPos, info.state(), info.nbt()) instanceof AbstractComputerBlockEntity computerBlockEntity)
+		if(BlockEntity.loadStatic(localPos, info.state(), nbt) instanceof AbstractComputerBlockEntity computerBlockEntity)
 			family = computerBlockEntity.getFamily();
 
 
 		int computerID;
 		if(nbt.contains("ComputerId"))
 			computerID = nbt.getInt("ComputerId");
-		else computerID = ComputerCraftAPI.createUniqueNumberedSaveDir(level.getServer(), IDAssigner.COMPUTER);
+		else computerID = ComputerCraftAPI.createUniqueNumberedSaveDir(Objects.requireNonNull(level.getServer()), IDAssigner.COMPUTER);
 
 		ServerComputer computer = ServerContext.get(Objects.requireNonNull(level.getServer())).registry().get(computerID);
 
@@ -88,7 +90,7 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 		if(!ComputerTicker.computers.contains(computer))
 			ComputerTicker.registerComputer(computer);
 
-		info.nbt().putInt("ComputerId", computerID);
+		nbt.putInt("ComputerId", computerID);
 
 		ComputerState computerState = computer.isOn() ? ComputerState.BLINKING : ComputerState.OFF;
 
@@ -117,9 +119,11 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 
 		for(Contraption partContraption : contraptions){
 			partContraption.getBlocks().forEach((blockPos, structureBlockInfo) -> {
-				if(blockPos.equals(localPos)) return;
+//				if(blockPos.equals(localPos)) return;
 				if(structureBlockInfo.nbt() == null) return;
 				BlockEntity blockEntity = BlockEntity.loadStatic(blockPos, structureBlockInfo.state(), structureBlockInfo.nbt());
+
+				if (blockEntity == null) return;
 
 				blockEntity.setLevel(level);
 
@@ -157,12 +161,12 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 
 		new ComputerContainerData(computer, new ItemStack(ModRegistry.Items.COMPUTER_NORMAL.get())).open(player, new MenuProvider() {
 			@Override
-			public Component getDisplayName() {
+			public @NotNull Component getDisplayName() {
 				return Component.translatable("gui.computercraft.view_computer");
 			}
 
 			@Override
-			public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
+			public AbstractContainerMenu createMenu(int id, @NotNull Inventory inventory, @NotNull Player player) {
 				return new ViewComputerMenu(id, inventory, finalComputer);
 			}
 		});

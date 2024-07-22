@@ -18,7 +18,6 @@ import dan200.computercraft.core.util.LuaUtil;
 
 import dan200.computercraft.shared.computer.core.ServerContext;
 
-import dan200.computercraft.shared.peripheral.modem.wired.WiredModemElement;
 import net.minecraft.world.level.Level;
 
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +31,8 @@ import java.util.Set;
 
 public class TrainModem implements IPeripheral {
 	private final Map<String, IPeripheral> peripherals;
-	private Map<String, RemotePeripheralWrapper> peripheralWrappers = new HashMap<>();
-	private Level level;
+	private final Map<String, RemotePeripheralWrapper> peripheralWrappers = new HashMap<>();
+	private final Level level;
 
 	TrainModem(Map<String, IPeripheral> peripherals, Level level){
 		this.peripherals = peripherals;
@@ -45,7 +44,7 @@ public class TrainModem implements IPeripheral {
 		IPeripheral.super.attach(computer);
 
 		peripherals.forEach((name, peripheral) -> {
-			var methods = ServerContext.get(level.getServer()).peripheralMethods().getSelfMethods(peripheral);
+			var methods = ServerContext.get(Objects.requireNonNull(level.getServer())).peripheralMethods().getSelfMethods(peripheral);
 			var wrapper = new RemotePeripheralWrapper(this, peripheral, computer, name, methods);
 			this.peripheralWrappers.put(name, wrapper);
 			wrapper.attach();
@@ -74,23 +73,23 @@ public class TrainModem implements IPeripheral {
 
 	@LuaFunction
 	public final Object[] getTypeRemote(IComputerAccess computer, String name){
-		IPeripheral peripheral = peripheralWrappers.get(name).peripheral;
+		RemotePeripheralWrapper peripheral = peripheralWrappers.get(name);
 		if(peripheral == null) return null;
 		return LuaUtil.consArray(peripheral.getType(), peripheral.getAdditionalTypes());
 	}
 
 	@LuaFunction
 	public final boolean hasTypeRemote(IComputerAccess computer, String name, String type){
-		IPeripheral peripheral = peripheralWrappers.get(name).peripheral;
+		RemotePeripheralWrapper peripheral = peripheralWrappers.get(name);
 		if(peripheral == null) return false;
 		return peripheral.getType().equals(type) || peripheral.getAdditionalTypes().contains(type);
 	}
 
 	@LuaFunction
-	public final String[] getMethodsRemote(IComputerAccess computer, String name){
+	public final Collection<String > getMethodsRemote(IComputerAccess computer, String name){
 		RemotePeripheralWrapper peripheral = peripheralWrappers.get(name);
 		if(peripheral == null) return null;
-		return peripheral.methodMap.keySet().toArray(new String[0]);
+		return peripheral.getMethodNames();
 	}
 
 	public Map<String, IPeripheral> getRemotePeripherals() {

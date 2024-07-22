@@ -5,8 +5,6 @@ import com.simibubi.create.compat.computercraft.implementation.CreateLuaTable;
 import com.simibubi.create.content.trains.entity.Train;
 
 import com.simibubi.create.content.trains.schedule.Schedule;
-import com.simibubi.create.content.trains.schedule.ScheduleEntry;
-import com.simibubi.create.content.trains.schedule.destination.ScheduleInstruction;
 import com.simibubi.create.content.trains.station.TrainEditPacket;
 import com.simibubi.create.foundation.utility.Components;
 
@@ -81,7 +79,7 @@ public class TrainApi implements ILuaAPI {
 
 	@LuaFunction
 	public final double getSpeed(){
-		return train.speed;
+		return train.speed*20;
 	}
 
 	@LuaFunction
