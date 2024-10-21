@@ -3,6 +3,7 @@ package dev.szedann.create_networking;
 import com.simibubi.create.Create;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.Contraption;
+import com.simibubi.create.content.contraptions.ContraptionWorld;
 import com.simibubi.create.content.contraptions.behaviour.MovingInteractionBehaviour;
 
 import com.simibubi.create.content.trains.entity.CarriageContraption;
@@ -10,6 +11,8 @@ import com.simibubi.create.content.trains.entity.CarriageContraption;
 import com.simibubi.create.content.trains.entity.Train;
 
 import dan200.computercraft.api.ComputerCraftAPI;
+import dan200.computercraft.api.network.Packet;
+import dan200.computercraft.api.network.PacketReceiver;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.api.peripheral.PeripheralLookup;
 import dan200.computercraft.core.computer.ComputerSide;
@@ -25,6 +28,8 @@ import dan200.computercraft.shared.config.Config;
 import dan200.computercraft.shared.network.container.ComputerContainerData;
 import dan200.computercraft.shared.peripheral.modem.ModemPeripheral;
 import dan200.computercraft.shared.peripheral.monitor.MonitorBlockEntity;
+import dan200.computercraft.shared.peripheral.monitor.MonitorPeripheral;
+import dan200.computercraft.shared.peripheral.monitor.MonitorRenderer;
 import dan200.computercraft.shared.util.IDAssigner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -40,6 +45,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+
+import net.minecraft.world.phys.Vec3;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -77,7 +84,9 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 			computerID = nbt.getInt("ComputerId");
 		else computerID = ComputerCraftAPI.createUniqueNumberedSaveDir(Objects.requireNonNull(level.getServer()), IDAssigner.COMPUTER);
 
-		ServerComputer computer = ServerContext.get(Objects.requireNonNull(level.getServer())).registry().get(computerID);
+		ServerComputer computer = ComputerTicker.computers.stream().filter(c->c.getID() == computerID).findFirst().orElse(
+				ServerContext.get(Objects.requireNonNull(level.getServer())).registry().get(computerID)
+		);
 
 		if(computer == null){
 			computer = new ServerComputer((ServerLevel) level, localPos, computerID, null, family, Config.computerTermWidth, Config.computerTermHeight);
@@ -117,24 +126,28 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 
 		Map<String, IPeripheral> peripherals = new HashMap<>();
 
-		for(Contraption partContraption : contraptions){
-			partContraption.getBlocks().forEach((blockPos, structureBlockInfo) -> {
+		ContraptionWorld world = new ContraptionWorld(level, contraption);
+
+//		for(Contraption partContraption : contraptions){
+			contraption.getBlocks().forEach((blockPos, structureBlockInfo) -> {
 //				if(blockPos.equals(localPos)) return;
 				if(structureBlockInfo.nbt() == null) return;
 				BlockEntity blockEntity = BlockEntity.loadStatic(blockPos, structureBlockInfo.state(), structureBlockInfo.nbt());
 
 				if (blockEntity == null) return;
 
-				blockEntity.setLevel(level);
+				blockEntity.setLevel(world);
 
-				IPeripheral peripheral = PeripheralLookup.get().find(level, blockPos, structureBlockInfo.state(), blockEntity, null);
+				IPeripheral peripheral = PeripheralLookup.get().find(world, blockPos, structureBlockInfo.state(), blockEntity, null);
 
 				if(peripheral == null) return;
 
-				if(!(peripheral instanceof ModemPeripheral modem))
-					return;
+//				if(peripheral instanceof MonitorPeripheral monitor)
 
-				ComputerCraftAPI.getWirelessNetwork(level.getServer()).addReceiver(modem);
+
+
+
+//				ComputerCraftAPI.getWirelessNetwork(level.getServer()).addReceiver(modem);
 
 
 				if(blockEntity instanceof MonitorBlockEntity monitor &&
@@ -143,21 +156,15 @@ public class ComputerInteractionBehaviour extends MovingInteractionBehaviour {
 
 				peripherals.put(getPeripheralName(peripheral, peripherals), peripheral);
 
-//				finalComputer.setPeripheral(ComputerSide.BOTTOM, peripheral);
+				finalComputer.setPeripheral(ComputerSide.BOTTOM, peripheral);
 
 			});
-		}
+//		}
 
-		TrainModem modem = new TrainModem(peripherals, level);
+		ContraptionModem modem = new ContraptionModem(peripherals, level);
 
 		finalComputer.setPeripheral(ComputerSide.BACK, modem);
 
-
-//		computer.setPeripheral(ComputerSide.BOTTOM);
-
-//		peripherals.forEach(peripheral -> {
-//
-//		})
 
 		new ComputerContainerData(computer, new ItemStack(ModRegistry.Items.COMPUTER_NORMAL.get())).open(player, new MenuProvider() {
 			@Override

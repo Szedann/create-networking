@@ -29,12 +29,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class TrainModem implements IPeripheral {
+public class ContraptionModem implements IPeripheral {
 	private final Map<String, IPeripheral> peripherals;
 	private final Map<String, RemotePeripheralWrapper> peripheralWrappers = new HashMap<>();
 	private final Level level;
 
-	TrainModem(Map<String, IPeripheral> peripherals, Level level){
+	ContraptionModem(Map<String, IPeripheral> peripherals, Level level){
 		this.peripherals = peripherals;
 		this.level = level;
 	}
@@ -106,7 +106,7 @@ public class TrainModem implements IPeripheral {
 	}
 
 	private static class RemotePeripheralWrapper implements IComputerAccess, GuardedLuaContext.Guard {
-		private final TrainModem trainModem;
+		private final ContraptionModem contraptionModem;
 		private final IPeripheral peripheral;
 		private final IComputerAccess computer;
 		private final String name;
@@ -120,8 +120,8 @@ public class TrainModem implements IPeripheral {
 
 		private @Nullable GuardedLuaContext contextWrapper;
 
-		RemotePeripheralWrapper(TrainModem trainModem, IPeripheral peripheral, IComputerAccess computer, String name, Map<String, PeripheralMethod> methods) {
-			this.trainModem = trainModem;
+		RemotePeripheralWrapper(ContraptionModem contraptionModem, IPeripheral peripheral, IComputerAccess computer, String name, Map<String, PeripheralMethod> methods) {
+			this.contraptionModem = contraptionModem;
 			this.peripheral = peripheral;
 			this.computer = computer;
 			this.name = name;
@@ -250,8 +250,8 @@ public class TrainModem implements IPeripheral {
 		@Override
 		public Map<String, IPeripheral> getAvailablePeripherals() {
 			if (!attached) throw new NotAttachedException();
-			synchronized (trainModem.getRemotePeripherals()) {
-				return Map.copyOf(trainModem.getRemotePeripherals());
+			synchronized (contraptionModem.getRemotePeripherals()) {
+				return Map.copyOf(contraptionModem.getRemotePeripherals());
 			}
 		}
 
@@ -259,8 +259,8 @@ public class TrainModem implements IPeripheral {
 		@Override
 		public IPeripheral getAvailablePeripheral(String name) {
 			if (!attached) throw new NotAttachedException();
-			synchronized (trainModem.getRemotePeripherals()) {
-				return trainModem.getRemotePeripherals().get(name);
+			synchronized (contraptionModem.getRemotePeripherals()) {
+				return contraptionModem.getRemotePeripherals().get(name);
 			}
 		}
 	}
